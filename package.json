@@ -10,6 +10,6 @@
   "author": "ceqadrat@gmail.com",
   "license": "MIT",
   "dependencies": {
-
+    "htmlparser2": "^3.9.1"
   }
 }

@@ -1,5 +1,5 @@
 const http = require("http");
-
+const coldfilmParser = require('./coldfilmParser');
 
 let options = {
     hostname: 'coldfilm.ru',
@@ -12,7 +12,7 @@ let request = http.request(options, (res) => {
     res.setEncoding('utf-8');
     res
         .on('data', (chunk) => {
-            console.log(`BODY: ${chunk}`);
+            coldfilmParser.updateParser(chunk);
         })
         .on('end', () => {
             console.log('end')
