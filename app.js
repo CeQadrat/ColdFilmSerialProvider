@@ -1,26 +1,35 @@
 const http = require("http");
 const coldfilmParser = require('./coldfilmParser');
 
-let options = {
-    hostname: 'coldfilm.ru',
-    port: 80,
-    path: '/',
-    method: 'GET'
-};
+function getRequest(path,parser){
+    let options = {
+        hostname: path,
+        port: 80,
+        path: '/',
+        method: 'GET'
+    };
 
-let request = http.request(options, (res) => {
-    res.setEncoding('utf-8');
-    res
-        .on('data', (chunk) => {
-            coldfilmParser.updateParser(chunk);
-        })
-        .on('end', () => {
-            console.log('end')
-        })
+    let request = http.request(options, (res) => {
+        let body = [];
+        res
+            .on('data', (chunk) => {
+                body.push(chunk);
+            })
+            .on('end', () => {
+                body = Buffer.concat(body).toString();
+                parser(body);
+            })
+    });
+
+    request.on('error', (err) => {
+        console.error('123', err);
+    });
+
+    request.end();
+}
+
+getRequest('coldfilm.ru', (chunk) => {
+    let series = coldfilmParser.updateParser(chunk);
+    console.log('serial');
+    console.log(series);
 });
-
-request.on('error', (err) => {
-    console.error('123', err);
-});
-
-request.end();
