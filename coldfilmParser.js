@@ -2,10 +2,10 @@ const htmlparser = require("htmlparser2");
 
 function updateParser(str){
     let parseLink = false;
-    let parseName = false;
     let parseDate = false;
     let parseNextPage = false;
     let nextPageLink = '';
+    let serialTitle = '';
     let newSeries = [];
     let serial = {};
     let parser = new htmlparser.Parser({
@@ -16,11 +16,6 @@ function updateParser(str){
             if(name === 'a' && parseLink) {
                 serial.link = attribs.href;
             }
-            if(name === 'b' && parseLink){
-                parseName = true;
-                if(serial.name) serial.name += ' ';
-                else serial.name = '';
-            }
             if(name === "div" && attribs.class === "eDetails"){
                 parseDate = true;
             }
@@ -30,14 +25,8 @@ function updateParser(str){
             }
         },
         ontext: (text) => {
-            if(parseLink && !parseName){
-                text = text.slice(1,-19);
-                text = text.split(' ');
-                serial.season = text[0];
-                serial.series = text[2];
-            }
-            if(parseName){
-                serial.name += text;
+            if(parseLink){
+                serialTitle +=text;
             }
             if(parseDate){
                 serial.date = new Date(text);
@@ -48,10 +37,17 @@ function updateParser(str){
         },
         onclosetag: (tagname) => {
             if(tagname === "a" && parseLink){
-                parseLink = false;
-            }
-            if(tagname === "b" && parseName){
-                parseName = false;
+                serialTitle = serialTitle.slice(1,-19);
+                serialTitle = serialTitle.split(' ');
+                serial.name = '';
+                serialTitle.forEach((item, i, arr) => {
+                    if(isNaN(item) && parseLink) serial.name += item+' ';
+                    else parseLink = false;
+                    if(item == 'сезон') serial.season = arr[i-1];
+                    if(item == 'серия') serial.series = arr[i-1];
+                });
+                serial.name = serial.name.slice(0,-1);
+                serialTitle = '';
             }
             if(tagname === "div" && parseDate){
                 parseDate = false;

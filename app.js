@@ -1,40 +1,69 @@
 const http = require("http");
 const coldfilmParser = require('./coldfilmParser');
-
-let series = [];
+var utf8 = require('utf8');
 
 function getRequest(path) {
-    let options = {
-        hostname: 'coldfilm.ru',
-        port: 80,
-        path: path,
-        method: 'GET'
-    };
-    let request = http.request(options, (res) => {
-        let body = [];
-        res
-            .on('data', (chunk) => {
-                body.push(chunk);
-            })
-            .on('end', () => {
-                body = Buffer.concat(body).toString();
-                let data = coldfilmParser.updateParser(body);
-                let path = data.nextPageLink;
-                series = series.concat(data.series);
-                if(path) getRequest(path);
-            })
-    });
+    return new Promise((resolve, reject) => {
+        let options = {
+            hostname: 'coldfilm.ru',
+            port: 80,
+            method: 'GET',
+            path
+        };
+        let request = http.request(options, (res) => {
+            let body = [];
+            res
+                .on('data', (chunk) => {
+                    body.push(chunk);
+                })
+                .on('end', () => {
+                    body = Buffer.concat(body).toString();
+                    let data = coldfilmParser.updateParser(body);
+                    resolve(data);
+                })
+        });
 
-    request.on('error', (err) => {
-        console.error('123', err);
-    });
+        request.on('error', (err) => {
+            reject(err);
+        });
 
-    request.end();
+        request.end();
+
+    });
+}
+let name = 'как';
+
+
+function* getSerial() {
+    let path = '/search/?q=' + utf8.encode(name).split(' ').join('+') + ';t=0;p=1;md=news';
+    let series = [];
+    while (true) {
+        let data = yield getRequest(path);
+        path = data.nextPageLink;
+        series = series.concat(data.series);
+        if (!path) break;
+    }
+    return series;
 }
 
-let path = '/search/?q=%D0%98%D0%B3%D1%80%D0%B0+%D0%BF%D1%80%D0%B5%D1%81%D1%82%D0%BE%D0%BB%D0%BE%D0%B2;t=0;p=1;md=news';
-getRequest(path);
+function execute(generator, yieldValue) {
+    return new Promise((resolve, reject) => {
+        let next = generator.next(yieldValue);
 
+        if (!next.done) {
+            next.value
+                .then(result => execute(generator, result))
+                .catch(err => reject(err));
+        } else {
+            console.log('nv');
+            resolve(next.value);
+        }
+    });
+}
 
-console.log('serial');
-setTimeout(() => {console.log(series)}, 5000);
+execute(getSerial())
+    .then((series) => {
+        console.log('Series num = ', series.length);
+        console.log(series);
+    })
+    .catch(err => console.error(err));
