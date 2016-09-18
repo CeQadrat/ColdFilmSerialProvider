@@ -1,6 +1,7 @@
-const http = require("http");
+const http = require('http');
 const coldfilmParser = require('./coldfilmParser');
-var utf8 = require('utf8');
+const utf8 = require('utf8');
+const co = require('co');
 
 function getRequest(path) {
     return new Promise((resolve, reject) => {
@@ -46,22 +47,7 @@ function* getSerial() {
     return series;
 }
 
-function execute(generator, yieldValue) {
-    return new Promise((resolve, reject) => {
-        let next = generator.next(yieldValue);
-
-        if (!next.done) {
-            next.value
-                .then(result => execute(generator, result))
-                .catch(err => reject(err));
-        } else {
-            console.log('nv');
-            resolve(next.value);
-        }
-    });
-}
-
-execute(getSerial())
+co(getSerial())
     .then((series) => {
         console.log('Series num = ', series.length);
         console.log(series);
