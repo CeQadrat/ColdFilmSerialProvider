@@ -1,6 +1,6 @@
 class ColdFilmSP{
-    constructor(seralName){
-        this.serialName = seralName;
+    constructor(serialName){
+        this.serialName = serialName;
     }
     get getSeries(){
         return function* gen(){

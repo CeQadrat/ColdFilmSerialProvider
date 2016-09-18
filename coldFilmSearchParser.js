@@ -1,6 +1,6 @@
-const htmlparser = require("htmlparser2");
+const htmlparser = require('htmlparser2');
 
-function updateParser(str){
+function coldFilmSearchParser(str){
     let parseLink = false;
     let parseDate = false;
     let parseNextPage = false;
@@ -10,13 +10,13 @@ function updateParser(str){
     let serial = {};
     let parser = new htmlparser.Parser({
         onopentag: (name, attribs) => {
-            if(name === "div" && attribs.class === "eTitle"){
+            if(name === 'div' && attribs.class === 'eTitle'){
                 parseLink = true;
             }
             if(name === 'a' && parseLink) {
                 serial.link = attribs.href;
             }
-            if(name === "div" && attribs.class === "eDetails"){
+            if(name === 'div' && attribs.class === 'eDetails'){
                 parseDate = true;
             }
             if(name === 'a' && attribs.class === 'swchItem'){
@@ -36,10 +36,10 @@ function updateParser(str){
             }
         },
         onclosetag: (tagname) => {
-            if(tagname === "a" && parseLink){
+            if(tagname === 'a' && parseLink){
+                serial.name = '';
                 serialTitle = serialTitle.slice(1,-19);
                 serialTitle = serialTitle.split(' ');
-                serial.name = '';
                 serialTitle.forEach((item, i, arr) => {
                     if(isNaN(item) && parseLink) serial.name += item+' ';
                     else parseLink = false;
@@ -49,12 +49,12 @@ function updateParser(str){
                 serial.name = serial.name.slice(0,-1);
                 serialTitle = '';
             }
-            if(tagname === "div" && parseDate){
+            if(tagname === 'div' && parseDate){
                 parseDate = false;
                 newSeries.push(serial);
                 serial = {};
             }
-            if(tagname === "a" && parseNextPage){
+            if(tagname === 'a' && parseNextPage){
                 parseNextPage = false;
             }
         }
@@ -67,4 +67,4 @@ function updateParser(str){
     };
 }
 
-module.exports.updateParser = updateParser;
+module.exports = coldFilmSearchParser;
