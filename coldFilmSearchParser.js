@@ -1,69 +1,71 @@
-const htmlparser = require('htmlparser2');
+const htmlParser = require('htmlparser2');
 
-function coldFilmSearchParser(str){
-    let parseLink = false;
-    let parseDate = false;
-    let parseNextPage = false;
+function coldFilmSearchParser(parseString){
+    let enableParseLink = false;
+    let enableParseDate = false;
+    let enableParseNextPage = false;
+
     let nextPageLink = '';
     let serialTitle = '';
-    let newSeries = [];
+    let series = [];
     let serial = {};
-    let parser = new htmlparser.Parser({
+
+    let parser = new htmlParser.Parser({
         onopentag: (name, attribs) => {
             if(name === 'div' && attribs.class === 'eTitle'){
-                parseLink = true;
+                enableParseLink = true;
             }
-            if(name === 'a' && parseLink) {
+            if(name === 'a' && enableParseLink) {
                 serial.link = attribs.href;
             }
             if(name === 'div' && attribs.class === 'eDetails'){
-                parseDate = true;
+                enableParseDate = true;
             }
             if(name === 'a' && attribs.class === 'swchItem'){
                 nextPageLink = attribs.href.slice(13);
-                parseNextPage = true;
+                enableParseNextPage = true;
             }
         },
         ontext: (text) => {
-            if(parseLink){
+            if(enableParseLink){
                 serialTitle +=text;
             }
-            if(parseDate){
+            if(enableParseDate){
                 serial.date = new Date(text);
             }
-            if(parseNextPage){
+            if(enableParseNextPage){
                 if(text != '»') nextPageLink = null;
             }
         },
         onclosetag: (tagname) => {
-            if(tagname === 'a' && parseLink){
+            if(tagname === 'a' && enableParseLink){
                 serial.name = '';
                 serialTitle = serialTitle.slice(1,-19);
                 serialTitle = serialTitle.split(' ');
                 serialTitle.forEach((item, i, arr) => {
-                    if(isNaN(item) && parseLink) serial.name += item+' ';
-                    else parseLink = false;
+                    if(isNaN(item) && enableParseLink) serial.name += item+' ';
+                    else enableParseLink = false;
                     if(item == 'сезон') serial.season = arr[i-1];
                     if(item == 'серия') serial.series = arr[i-1];
                 });
                 serial.name = serial.name.slice(0,-1);
                 serialTitle = '';
             }
-            if(tagname === 'div' && parseDate){
-                parseDate = false;
-                newSeries.push(serial);
+            if(tagname === 'div' && enableParseDate){
+                enableParseDate = false;
+                series.push(serial);
                 serial = {};
             }
-            if(tagname === 'a' && parseNextPage){
-                parseNextPage = false;
+            if(tagname === 'a' && enableParseNextPage){
+                enableParseNextPage = false;
             }
         }
     }, {decodeEntities: true});
-    parser.write(str);
+    parser.write(parseString);
     parser.end();
     return {
-        series: newSeries,
-        nextPageLink: nextPageLink
+        series,
+        nextPageLink
     };
 }
 

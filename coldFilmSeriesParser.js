@@ -1,8 +1,8 @@
-const htmlparser = require("htmlparser2");
+const htmlParser = require("htmlparser2");
 
-function coldFilmSeriesParser(str){
+function coldFilmSeriesParser(parseString){
     let enableParse = false;
-    let parseTorrentLink = false;
+    let enableParseTorrentLink = false;
 
     let serialCover = '';
     let sourceLinks = [];
@@ -10,7 +10,7 @@ function coldFilmSeriesParser(str){
     let torrent = {};
     let serialName = '';
 
-    let parser = new htmlparser.Parser({
+    let parser = new htmlParser.Parser({
         onopentag: (name, attribs) => {
             if(name === "td" && attribs.class === "eMessage"){
                 enableParse = true;
@@ -24,12 +24,12 @@ function coldFilmSeriesParser(str){
                 sourceLinks.push(attribs.src);
             }
             if(name === 'a' && enableParse){
-                parseTorrentLink = true;
+                enableParseTorrentLink = true;
                 torrent.link = attribs.href;
             }
         },
         ontext: (text) => {
-            if(parseTorrentLink){
+            if(enableParseTorrentLink){
                 torrent.info = text;
             }
         },
@@ -37,14 +37,14 @@ function coldFilmSeriesParser(str){
             if(tagname === "td" && enableParse){
                 enableParse = false;
             }
-            if(tagname === "a" && parseTorrentLink){
-                parseTorrentLink = false;
+            if(tagname === "a" && enableParseTorrentLink){
+                enableParseTorrentLink = false;
                 torrentLinks.push(torrent);
                 torrent = {};
             }
         }
     }, {decodeEntities: true});
-    parser.write(str);
+    parser.write(parseString);
     parser.end();
     return {
         serialName,
