@@ -1,4 +1,4 @@
-const coldFilmParsers = require('./coldFilmParsers');
+const searchParser = require('../parsers/coldFilmSearchParser');
 const utf8 = require('utf8');
 const http = require('http');
 
@@ -35,13 +35,13 @@ function* getSerial(name) {
     let series = [];
     do{
         let body = yield getRequest(path);
-        let data = coldFilmParsers.searchParser(body);
+        let data = searchParser.parse(body);
         path = data.nextPageLink;
         series = series.concat(data.series);
     } while(path);
     series.sort((s1,s2) => {
-        if(s1.date > s2.date) return 1;
-        if(s1.date < s2.date) return -1;
+        if(s1.date > s2.date) return -1;
+        if(s1.date < s2.date) return 1;
     });
     return series;
 }

@@ -1,4 +1,4 @@
-const coldFilmParsers = require('./coldFilmParsers');
+const seriesParser = require('../parsers/coldFilmSeriesParser');
 const http = require('http');
 
 function getRequest(path) {
@@ -25,8 +25,7 @@ function getRequest(path) {
     });
 }
 
-function* getEpisode() {
-    let series = this.series;
+function* getEpisode(series) {
     for(let episode of series) {
         let path = episode.link.slice(18);
         let series = {
@@ -38,17 +37,18 @@ function* getEpisode() {
         yield new Promise((resolve,reject) => {
             getRequest(path)
                 .then((data) => {
-                    data = coldFilmParsers.seriesParser(data);
+                    data = seriesParser.parse(data);
                     series.serialCover = data.serialCover;
                     series.links = {
                         linksToWatch: data.sourceLinks,
                         torrentLinks: data.torrentLinks
                     };
+                    // console.log(series);
                     resolve(series);
                 })
                 .catch(err => reject(err));
         });
-    };
+    }
 }
 
 module.exports = getEpisode;

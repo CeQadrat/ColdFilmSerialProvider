@@ -1,20 +1,28 @@
-const serialGen = require('./coldFilmSearchGenerator');
-const episodeGen = require('./coldFilmSeriesGenerator');
+const serialGen = require('./generators/coldFilmSearchGenerator');
+const episodeGen = require('./generators/coldFilmSeriesGenerator');
 const co = require('co');
 
-class ColdFilmSP {
+module.exports = class ColdFilmSP {
     constructor(serialName){
         this.serialName = serialName;
     }
     getSeries(){
-        return new Promise((resolve,reject) => {
-            co(serialGen(this.serialName)).then((series) => {
-                this.series = series;
-                resolve(episodeGen);
-            })
-                .catch(err => console.error(err));
-        });
+        let serialName = this.serialName;
+        let episodes = this.series;
+        return function* () {
+            yield new Promise((resolve,reject) => {
+                co(serialGen(serialName)).then((series) => {
+                    episodes = series;
+                    resolve();
+                })
+                    .catch(err => console.error(err));
+            });
+            yield* episodeGen(episodes);
+        }
     }
-}
-
-module.exports = ColdFilmSP;
+    getInfo(){
+        return {
+            provider: 'coldfilm.ru'
+        }
+    }
+};
