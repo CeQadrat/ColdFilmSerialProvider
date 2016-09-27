@@ -1,3 +1,9 @@
-/**
- * Created by Dima on 10.09.2016.
- */
+const ColdFilmSP = require('./coldFilmSerialProvider');
+
+let provider = new ColdFilmSP('Мистер робот');
+provider.init().then(() => {
+    let generator = provider.getSeries();
+    generator.next().value.then((episode) => {
+        console.log(episode);
+    });
+});
