@@ -1,4 +1,4 @@
-const htmlParser = require("htmlparser2");
+const htmlParser = require('htmlparser2');
 
 module.exports = {
     parse(page){

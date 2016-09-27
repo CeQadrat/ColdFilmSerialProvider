@@ -1,31 +1,7 @@
 const seriesParser = require('../parsers/coldFilmSeriesParser');
-const http = require('http');
+const getPage = require('./getPageRequest');
 
-function getRequest(path) {
-    return new Promise((resolve, reject) => {
-        let options = {
-            hostname: 'coldfilm.ru',
-            port: 80,
-            method: 'GET',
-            path
-        };
-        let request = http.request(options, (res) => {
-            let body = [];
-            res
-                .on('data', chunk => body.push(chunk))
-                .on('end', () => {
-                    body = Buffer.concat(body).toString();
-                    resolve(body);
-                })
-        });
-
-        request.on('error', reject);
-
-        request.end();
-    });
-}
-
-function* getEpisode(series) {
+module.exports = function* getEpisode(series) {
     for(let episode of series) {
         let path = episode.link.slice(18);
         let series = {
@@ -35,7 +11,7 @@ function* getEpisode(series) {
             date: episode.date
         };
         yield new Promise((resolve,reject) => {
-            getRequest(path)
+            getPage(path)
                 .then((data) => {
                     data = seriesParser.parse(data);
                     series.serialCover = data.serialCover;
@@ -43,12 +19,9 @@ function* getEpisode(series) {
                         linksToWatch: data.sourceLinks,
                         torrentLinks: data.torrentLinks
                     };
-                    // console.log(series);
                     resolve(series);
                 })
                 .catch(err => reject(err));
         });
     }
-}
-
-module.exports = getEpisode;
+};

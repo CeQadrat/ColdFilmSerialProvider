@@ -1,40 +1,12 @@
 const searchParser = require('../parsers/coldFilmSearchParser');
 const utf8 = require('utf8');
-const http = require('http');
+const getPage = require('./getPageRequest');
 
-function generatePath(name){
-    return '/search/?q=' + utf8.encode(name).split(' ').join('+') + ';t=0;p=1;md=news';
-}
-
-function getRequest(path) {
-    return new Promise((resolve, reject) => {
-        let options = {
-            hostname: 'coldfilm.ru',
-            port: 80,
-            method: 'GET',
-            path
-        };
-        let request = http.request(options, (res) => {
-            let body = [];
-            res
-                .on('data', chunk => body.push(chunk))
-                .on('end', () => {
-                    body = Buffer.concat(body).toString();
-                    resolve(body);
-                })
-        });
-
-        request.on('error', reject);
-
-        request.end();
-    });
-}
-
-function* getSerial(name) {
+module.exports = function* getSerial(name) {
     let path = generatePath(name);
     let series = [];
     do{
-        let body = yield getRequest(path);
+        let body = yield getPage(path);
         let data = searchParser.parse(body);
         path = data.nextPageLink;
         series = series.concat(data.series);
@@ -44,6 +16,8 @@ function* getSerial(name) {
         if(s1.date < s2.date) return 1;
     });
     return series;
-}
+};
 
-module.exports = getSerial;
+function generatePath(name){
+    return '/search/?q=' + utf8.encode(name).split(' ').join('+') + ';t=0;p=1;md=news';
+}

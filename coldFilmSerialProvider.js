@@ -6,19 +6,18 @@ module.exports = class ColdFilmSP {
     constructor(serialName){
         this.serialName = serialName;
     }
+    init(){
+        let self = this;
+        return new Promise((resolve,reject) => {
+            co(serialGen(self.serialName)).then((series) => {
+                self.series = series;
+                resolve();
+            })
+                .catch(err => reject(err));
+        });
+    }
     getSeries(){
-        let serialName = this.serialName;
-        let episodes = this.series;
-        return function* () {
-            yield new Promise((resolve,reject) => {
-                co(serialGen(serialName)).then((series) => {
-                    episodes = series;
-                    resolve();
-                })
-                    .catch(err => console.error(err));
-            });
-            yield* episodeGen(episodes);
-        }
+        return episodeGen(this.series);
     }
     getInfo(){
         return {
